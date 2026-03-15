@@ -4,8 +4,8 @@ import math
 app = Flask(__name__)
 
 # -----------------------------------------------
-# OceanRoute — Smart Shipping for Marine Life
-# Built for SMathHacks 2026 — Under the Sea
+# OceanRoute - Smart Shipping for Marine Life
+# Built for SMathHacks 2026 - Under the Sea
 # Data Science Track
 # -----------------------------------------------
 

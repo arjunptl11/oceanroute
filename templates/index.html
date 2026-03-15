@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OceanRoute — Smart Shipping for Marine Life</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Our CSS -->
+  <link rel="stylesheet" href="/static/css/style.css" />
+
+  <!-- Leaflet tooltip style override -->
+  <style>
+    .leaflet-tooltip {
+      background: rgba(4, 13, 24, 0.92);
+      border: 1px solid rgba(0, 180, 220, 0.25);
+      color: #b8dde8;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.68rem;
+      border-radius: 3px;
+      padding: 6px 10px;
+      box-shadow: none;
+    }
+    .leaflet-tooltip-top::before {
+      border-top-color: rgba(0, 180, 220, 0.25);
+    }
+    .leaflet-popup-content-wrapper {
+      background: rgba(4, 13, 24, 0.95);
+      border: 1px solid rgba(0, 180, 220, 0.25);
+      color: #b8dde8;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.68rem;
+      border-radius: 4px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .leaflet-popup-tip { background: rgba(4, 13, 24, 0.95); }
+    .leaflet-control-zoom a {
+      background: #071828 !important;
+      color: #b8dde8 !important;
+      border-color: rgba(0,180,220,0.2) !important;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">Ocean<span>Route</span></div>
+  <div class="header-sub">Smart Shipping for Marine Life</div>
+  <div class="header-right">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      Live Simulation
+    </div>
+  </div>
+</header>
+
+<!-- APP LAYOUT -->
+<div class="app">
+
+  <!-- LEFT CONTROLS PANEL -->
+  <div class="panel-left">
+
+    <div>
+      <div class="section-label">Ship Parameters</div>
+      <div class="slider-group">
+
+        <div class="slider-item">
+          <label>
+            Noise Level
+            <span id="noiseLabel">120 dB</span>
+          </label>
+          <input
+            type="range" min="50" max="200" value="120"
+            oninput="updateNoise(this.value)"
+          />
+        </div>
+
+        <div class="slider-item">
+          <label>
+            Ship Density
+            <span id="densityLabel">10</span>
+          </label>
+          <input
+            type="range" min="1" max="50" value="10"
+            oninput="updateDensity(this.value)"
+          />
+        </div>
+
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Actions</div>
+      <button class="btn success" onclick="optimizeRoute()">
+        <span>⚡</span> Optimize Route
+      </button>
+      <button class="btn primary" onclick="updateDisturbance()">
+        <span>🔄</span> Recalculate
+      </button>
+      <button class="btn danger" onclick="resetRoutes()">
+        <span>↺</span> Reset All Routes
+      </button>
+    </div>
+
+    <div>
+      <div class="section-label">Whale Routes</div>
+      <div id="routeToggles"></div>
+    </div>
+
+    <div>
+      <div class="section-label">Legend</div>
+      <div class="route-toggle" style="cursor:default">
+        <div class="route-dot" style="background:#00cfff"></div>
+        <span>Whale migration route</span>
+      </div>
+      <div class="route-toggle" style="cursor:default">
+        <div class="route-dot" style="background:#ff4f4f"></div>
+        <span>Shipping route (drag!)</span>
+      </div>
+      <div class="route-toggle" style="cursor:default">
+        <div class="route-dot" style="background:#f5c842"></div>
+        <span>Danger zone overlap</span>
+      </div>
+    </div>
+
+    <div style="margin-top: auto;">
+      <div class="species-box">
+        <div class="sb-name">🐋 Humpback Whale</div>
+        Megaptera novaeangliae — migrates up to 16,000 km/year. Highly sensitive to underwater noise. Ship engines at 120–190 dB can disrupt communication up to 100 km away.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAP CENTER -->
+  <div style="position:relative; height:100%;">
+    <div class="wave-bar" id="waveBar"></div>
+    <div id="map"></div>
+  </div>
+
+  <!-- RIGHT METRICS PANEL -->
+  <div class="panel-right">
+
+    <div>
+      <div class="section-label">Disturbance Scores</div>
+      <div class="score-grid">
+        <div class="score-card">
+          <div class="sc-label">Disturbance</div>
+          <div class="sc-val safe" id="disturbanceVal">—</div>
+          <div class="sc-unit">/ 100</div>
+        </div>
+        <div class="score-card">
+          <div class="sc-label">Whale Safety</div>
+          <div class="sc-val safe" id="safetyVal">—</div>
+          <div class="sc-unit">/ 100</div>
+        </div>
+      </div>
+
+      <div class="disturbance-bar-bg" style="margin-top:12px">
+        <div class="disturbance-bar-fill" id="disturbanceBarFill"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Route Details</div>
+      <div class="stat-row">
+        <span class="sr-label">Closest Approach</span>
+        <span class="sr-val" id="distanceVal">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="sr-label">Whales at Risk</span>
+        <span class="sr-val" id="affectedVal">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="sr-label">Noise Level</span>
+        <span class="sr-val" id="noiseVal">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="sr-label">Ship Density</span>
+        <span class="sr-val" id="densityVal">—</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Disturbance Over Time</div>
+      <div class="chart-wrap">
+        <canvas id="disturbanceChart"></canvas>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">How It Works</div>
+      <div class="species-box" style="border-left-color: #3dd68c;">
+        <div class="sb-name" style="font-size:0.75rem">The Model</div>
+        Disturbance = ship_density × noise_factor × (1 / distance)<br><br>
+        Closer shipping routes and louder engines = higher whale disturbance. Drag waypoints on the map to test route changes in real time.
+      </div>
+    </div>
+
+    <div class="status-msg" id="statusMsg">
+      Loading simulation...
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/static/js/map.js"></script>
+
+</body>
+</html>

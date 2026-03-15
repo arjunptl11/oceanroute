@@ -12,7 +12,7 @@ see how route changes affect whale safety.
 
 ---
 
-## How to Run (takes 2 minutes)
+## How to Run 
 
 ### 1. Make sure Python is installed
 ```
@@ -24,7 +24,7 @@ python --version
 pip install flask
 ```
 
-### 3. Run the app
+### 3. Run app
 ```
 python app.py
 ```

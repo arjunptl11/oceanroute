@@ -1,4 +1,4 @@
-# OceanRoute — Smart Shipping for Marine Life
+# OceanRoute: Smart Shipping for Marine Life
 ### SMathHacks 2026 | Data Science Track | Under the Sea
 
 ---
@@ -113,4 +113,4 @@ without significantly increasing shipping costs.
 
 ---
 
-Built by Arjun Patel, Aneesh Pudipeddi, Dhruv Mishra, and Sashank Kondraju for SMHacks 2026
+Built by Arjun Patel, Aneesh Pudipeddi, Dhruv Mishra, and Sashank Kondraju for SMathHacks 2026
